@@ -1,0 +1,11 @@
+{
+  "triggers": [
+    {
+      "name": "test_alarm",
+      "schedule": "23:59",
+      "action": "say:Test complete.",
+      "enabled": true,
+      "last_run": null
+    }
+  ]
+}

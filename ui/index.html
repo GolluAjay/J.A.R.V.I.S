@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS - Advanced Orchestrator</title>
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --accent: #ff6b00;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff4444;
+            --bg-dark: #0a0a0f;
+            --bg-panel: #12121a;
+            --bg-card: #1a1a24;
+            --border: rgba(0, 212, 255, 0.2);
+            --text: #e0e0e0;
+            --text-dim: #666;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 200;
+            letter-spacing: 6px;
+            color: var(--primary);
+            text-shadow: 0 0 30px var(--primary);
+        }
+
+        .logo span {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+
+        .nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--border);
+        }
+
+        .nav-item .icon { font-size: 18px; }
+
+        /* ===== MAIN ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+        }
+
+        .header h2 {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+        }
+
+        .header-time {
+            font-size: 28px;
+            font-weight: 200;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ===== CONTENT AREA ===== */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            align-content: start;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        .card-action {
+            font-size: 11px;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .card-action:hover { color: var(--primary); }
+
+        /* ===== METRICS ===== */
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .metric:last-child { border: none; }
+
+        .metric-label {
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .metric-value {
+            font-size: 13px;
+            font-family: 'SF Mono', monospace;
+            color: var(--success);
+        }
+
+        .metric-value.warning { color: var(--warning); }
+        .metric-value.danger { color: var(--danger); }
+
+        /* ===== PROGRESS BARS ===== */
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+
+        .progress-fill.low { background: var(--success); }
+        .progress-fill.medium { background: var(--warning); }
+        .progress-fill.high { background: var(--danger); }
+
+        /* ===== PROCESS LIST ===== */
+        .process-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .process-item {
+            display: grid;
+            grid-template-columns: 50px 40px 1fr;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 12px;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .process-item .pid { color: var(--text-dim); }
+        .process-item .cpu { color: var(--warning); }
+        .process-item .name { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+
+        /* ===== TERMINAL ===== */
+        .terminal {
+            grid-column: span 2;
+            background: #000;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: var(--success);
+        }
+
+        .terminal-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .terminal-input input {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--success);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .terminal-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ===== QUICK ACTIONS ===== */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        /* ===== SYSTEM TABS ===== */
+        .system-tab {
+            display: none;
+        }
+
+        .system-tab.active {
+            display: block;
+        }
+
+        /* ===== MONITOR GRID ===== */
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .cpu-core {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: var(--bg-panel);
+            border-radius: 6px;
+        }
+
+        .cpu-core-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cpu-core-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        /* ===== STATUS INDICATORS ===== */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-dot.offline { background: var(--danger); }
+        .status-dot.warning { background: var(--warning); }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ===== CHAT ===== */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .msg {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #000;
+            border-bottom-right-radius: 3px;
+        }
+
+        .msg.bot {
+            align-self: flex-start;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 3px;
+        }
+
+        .msg.system {
+            align-self: center;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-row input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 16px;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        .input-row input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-row button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
+            color: #000;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .input-row button:hover {
+            transform: scale(1.1);
+        }
+
+        .typing {
+            padding: 10px 20px;
+            display: none;
+        }
+
+        .typing.active { display: block; }
+        
+        .typing span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: bounce 1s infinite;
+        }
+
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>JARVIS</h1>
+                <span>ORCHESTRATOR</span>
+            </div>
+
+            <div class="nav">
+                <div class="nav-item active" onclick="showTab('dashboard', event)">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="showTab('processes', event)">
+                    <span class="icon">⚡</span>
+                    <span>Processes</span>
+                </div>
+                <div class="nav-item" onclick="showTab('network', event)">
+                    <span class="icon">🌐</span>
+                    <span>Network</span>
+                </div>
+                <div class="nav-item" onclick="showTab('docker', event)">
+                    <span class="icon">🐳</span>
+                    <span>Docker</span>
+                </div>
+                <div class="nav-item" onclick="showTab('terminal', event)">
+                    <span class="icon">💻</span>
+                    <span>Terminal</span>
+                </div>
+                <div class="nav-item" onclick="showTab('chat', event)">
+                    <span class="icon">💬</span>
+                    <span>AI Chat</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="main">
+            <div class="header">
+                <h2 id="tab-title">SYSTEM OVERVIEW</h2>
+                <div class="header-time" id="time">00:00:00</div>
+            </div>
+
+            <!-- DASHBOARD TAB -->
+            <div class="content system-tab active" id="tab-dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">CPU Usage</span>
+                        <span class="status-dot online"></span>
+                    </div>
+                    <div id="cpu-display">Loading...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width: 0%"></div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Memory</span>
+                        <span class="status-dot online"></span>
+                    </div>
+                    <div id="mem-display">Loading...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="mem-bar" style="width: 0%"></div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Disk</span>
+                        <span class="status-dot online"></span>
+                    </div>
+                    <div id="disk-display">Loading...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="disk-bar" style="width: 0%"></div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Uptime & Load</span>
+                    </div>
+                    <div id="uptime-display">Loading...</div>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">Top Processes</span>
+                        <span class="card-action" onclick="refreshData()">Refresh</span>
+                    </div>
+                    <div class="process-list" id="process-list"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Quick Actions</span>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="runAction('cpu')">CPU Info</button>
+                        <button class="action-btn" onclick="runAction('memory')">Memory</button>
+                        <button class="action-btn" onclick="runAction('disk')">Disk</button>
+                        <button class="action-btn" onclick="runAction('battery')">Battery</button>
+                        <button class="action-btn" onclick="runAction('docker')">Docker</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROCESSES TAB -->
+            <div class="content system-tab" id="tab-processes">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">All Processes</span>
+                        <input type="text" id="process-search" placeholder="Search..." 
+                               style="background: var(--bg-panel); border: 1px solid var(--border); 
+                                      padding: 5px 10px; border-radius: 4px; color: var(--text); font-size: 12px;"
+                               onkeyup="searchProcesses()">
+                    </div>
+                    <div class="process-list" id="all-processes"></div>
+                </div>
+            </div>
+
+            <!-- NETWORK TAB -->
+            <div class="content system-tab" id="tab-network">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Network Interfaces</span>
+                    </div>
+                    <div id="network-ifaces"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Connections</span>
+                    </div>
+                    <div id="network-conns"></div>
+                </div>
+            </div>
+
+            <!-- DOCKER TAB -->
+            <div class="content system-tab" id="tab-docker">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">Containers</span>
+                        <span class="card-action" onclick="refreshDocker()">Refresh</span>
+                    </div>
+                    <div id="docker-containers"></div>
+                </div>
+            </div>
+
+            <!-- TERMINAL TAB -->
+            <div class="content system-tab" id="tab-terminal">
+                <div class="terminal" id="terminal-output">
+                    JARVIS Terminal v1.0
+                    Type commands or use natural language
+                </div>
+                <div style="padding: 0 25px 25px;">
+                    <div class="terminal-input">
+                        <input type="text" id="terminal-input" placeholder="Enter command..." 
+                               onkeypress="if(event.key==='Enter')runTerminal()">
+                        <button onclick="runTerminal()">Run</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT TAB -->
+            <div class="content system-tab" id="tab-chat" style="display: none; flex-direction: column; overflow: hidden; padding: 0;">
+                <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <div class="msg bot">Good evening, sir. I'm now functioning as a full system orchestrator. I can manage processes, monitor system resources, handle files, and more. What would you like me to do?</div>
+                </div>
+                <div class="typing" id="typing">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="input-row">
+                    <input type="text" id="chat-input" placeholder="Ask JARVIS to do something..." 
+                           onkeypress="if(event.key==='Enter')sendChat()">
+                    <button onclick="sendChat()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        let currentTab = 'dashboard';
+        
+        // ===== INITIALIZATION =====
+        setInterval(() => {
+            document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', {hour12: false});
+        }, 1000);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+            setInterval(refreshData, 5000); // Auto-refresh every 5s
+        });
+
+        // ===== TABS =====
+        function showTab(tab, e) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (e) e.target.closest('.nav-item').classList.add('active');
+            
+            document.querySelectorAll('.system-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.display = 'none';
+            });
+            const tabEl = document.getElementById('tab-' + tab);
+            tabEl.classList.add('active');
+            tabEl.style.display = tab === 'chat' ? 'flex' : '';
+            
+            const titles = {
+                'dashboard': 'SYSTEM OVERVIEW',
+                'processes': 'PROCESS MANAGER',
+                'network': 'NETWORK TOOLS',
+                'docker': 'DOCKER ORCHESTRATION',
+                'terminal': 'TERMINAL',
+                'chat': 'AI ASSISTANT'
+            };
+            document.getElementById('tab-title').textContent = titles[tab];
+        }
+
+        // ===== DATA REFRESH =====
+        async function refreshData() {
+            try {
+                const resp = await fetch('/api/system');
+                const data = await resp.json();
+                
+                // CPU
+                const cpuVal = parseFloat(data.stats.cpu) || 0;
+                document.getElementById('cpu-display').innerHTML = `<span class="metric-value">${data.stats.cpu}</span>`;
+                updateBar('cpu-bar', cpuVal);
+                
+                // Memory
+                const memText = data.stats.disk.split('/')[0] || 'N/A';
+                document.getElementById('mem-display').innerHTML = `<span class="metric-value">${data.stats.memory.substring(0, 80)}</span>`;
+                
+                // Disk
+                const diskVal = parseInt(data.stats.disk) || 0;
+                document.getElementById('disk-display').innerHTML = `<span class="metric-value">${data.stats.disk}</span>`;
+                updateBar('disk-bar', diskVal);
+                
+                // Uptime
+                document.getElementById('uptime-display').innerHTML = `
+                    <div class="metric"><span class="metric-label">Uptime</span><span class="metric-value">${data.stats.uptime}</span></div>
+                `;
+                
+                // Processes
+                const procHTML = data.top_procs.map(p => `
+                    <div class="process-item">
+                        <span class="pid">${p.pid}</span>
+                        <span class="cpu">${p.cpu}%</span>
+                        <span class="name">${p.name}</span>
+                    </div>
+                `).join('');
+                document.getElementById('process-list').innerHTML = procHTML || 'No processes';
+                
+            } catch(e) {
+                console.error('Error:', e);
+            }
+        }
+
+        function updateBar(id, value) {
+            const bar = document.getElementById(id);
+            bar.style.width = value + '%';
+            bar.className = 'progress-fill ' + (value < 50 ? 'low' : value < 80 ? 'medium' : 'high');
+        }
+
+        const privilegedActions = new Set(['reboot', 'shutdown', 'empty_trash', 'clear_cache']);
+
+        // ===== ACTIONS =====
+        async function runAction(action) {
+            let confirmFlag = false;
+            if (privilegedActions.has(action)) {
+                if (!confirm(`Run privileged action "${action}" once?`)) {
+                    showTerminal('Action cancelled.');
+                    return;
+                }
+                confirmFlag = true;
+            }
+            try {
+                const resp = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: action, confirm: confirmFlag})
+                });
+                const data = await resp.json();
+                showTerminal(data.result);
+                showTab('terminal');
+            } catch(e) {
+                showTerminal('Error: ' + e.message);
+            }
+        }
+
+        // ===== TERMINAL =====
+        function showTerminal(text) {
+            const term = document.getElementById('terminal-output');
+            term.textContent += '\n\n> ' + text;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function terminalNeedsConfirm(cmd) {
+            return /\bsudo\b|\bdoas\b|\bpkexec\b|\bsu\s+|\brm\s+-\S*r|shutdown|reboot|\bdd\b.*of=\/dev/i.test(cmd);
+        }
+
+        async function runTerminal() {
+            const input = document.getElementById('terminal-input');
+            const cmd = input.value;
+            if (!cmd) return;
+
+            let confirmFlag = false;
+            if (terminalNeedsConfirm(cmd)) {
+                if (!confirm('This command looks privileged or destructive. Run it once?')) {
+                    showTerminal('Cancelled.');
+                    input.value = '';
+                    return;
+                }
+                confirmFlag = true;
+            }
+
+            showTerminal('$ ' + cmd);
+            
+            try {
+                const resp = await fetch('/api/terminal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({command: cmd, confirm: confirmFlag})
+                });
+                const data = await resp.json();
+                showTerminal(data.result);
+            } catch(e) {
+                showTerminal('Error: ' + e.message);
+            }
+            
+            input.value = '';
+        }
+
+        // ===== CHAT =====
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            // Add user message
+            const messages = document.getElementById('chat-messages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'msg user';
+            userMsg.textContent = text;
+            messages.appendChild(userMsg);
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+            
+            // Show typing
+            document.getElementById('typing').classList.add('active');
+            
+            try {
+                const resp = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text})
+                });
+                const data = await resp.json();
+                document.getElementById('typing').classList.remove('active');
+                const botMsg = document.createElement('div');
+                botMsg.className = 'msg bot';
+                botMsg.textContent = data.response;
+                messages.appendChild(botMsg);
+                messages.scrollTop = messages.scrollHeight;
+            } catch(e) {
+                document.getElementById('typing').classList.remove('active');
+                const errMsg = document.createElement('div');
+                errMsg.className = 'msg bot';
+                errMsg.textContent = 'Error: ' + e.message;
+                messages.appendChild(errMsg);
+            }
+        }
+
+        document.getElementById('chat-input').addEventListener('keypress', e => {
+            if(e.key === 'Enter') sendChat();
+        });
+
+        // ===== PROCESS SEARCH =====
+        async function searchProcesses() {
+            const search = document.getElementById('process-search').value;
+            const resp = await fetch('/api/processes?search=' + search);
+            const data = await resp.json();
+            
+            const html = data.processes.map(p => `
+                <div class="process-item">
+                    <span class="pid">${p.pid}</span>
+                    <span class="cpu">${p.cpu}%</span>
+                    <span class="name">${p.name}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('all-processes').innerHTML = html || 'No processes found';
+        }
+
+        // ===== DOCKER =====
+        async function refreshDocker() {
+            try {
+                const resp = await fetch('/api/docker');
+                const data = await resp.json();
+                document.getElementById('docker-containers').innerHTML = `
+                    <pre style="font-family: monospace; font-size: 12px; color: var(--success);">${data.output}</pre>
+                `;
+            } catch(e) {
+                document.getElementById('docker-containers').innerHTML = 'Docker not available';
+            }
+        }
+    </script>
+</body>
+</html>

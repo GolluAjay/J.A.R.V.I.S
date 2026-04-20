@@ -1,0 +1,179 @@
+#!/bin/bash
+# JARVIS Main Launcher
+
+JARVIS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="$JARVIS_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+
+# Prefer project virtualenv when present (so deps like neo4j resolve consistently)
+if [[ -x "$JARVIS_ROOT/.venv/bin/python3" ]]; then
+    PYTHON="$JARVIS_ROOT/.venv/bin/python3"
+else
+    PYTHON="python3"
+fi
+
+# Colors
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[0;33m'
+RESET='\033[0m'
+
+case "${1:-test}" in
+    "start"|"run"|"r")
+        "$PYTHON" -c "
+from jarvis.llm import JARVISBrain
+from jarvis.voice import VoiceOutput
+brain = JARVISBrain()
+voice = VoiceOutput()
+print('${CYAN}Starting JARVIS...${RESET}')
+voice.speak('Systems online, sir.')
+print('${GREEN}✓ JARVIS is running${RESET}')
+print('')
+print('Commands:')
+print('  ./jarvis chat    - Text chat')
+print('  ./jarvis voice  - Voice chat')
+print('  ./jarvis skills - List skills')
+print('  ./jarvis home   - Smart home')
+print('  ./jarvis auto   - Automation')
+print('  ./jarvis test  - Test all')
+print('  ./jarvis hud   - Terminal HUD')
+"
+        ;;
+
+    "chat"|"c")
+        "$PYTHON" -c "
+import os
+os.chdir('$JARVIS_ROOT')
+from jarvis.llm import JARVISBrain
+from jarvis.voice import VoiceOutput
+from jarvis.runtime import SkillsManager
+
+brain = JARVISBrain()
+voice = VoiceOutput()
+skills = SkillsManager()
+
+print('${CYAN}🤖 JARVIS Chat Mode${RESET}')
+print('Type exit to quit\n')
+
+while True:
+    try:
+        user = input('You: ')
+        if user.lower() in ['exit','quit']:
+            break
+        if user.strip():
+            skill = skills.match_skill(user.lower())
+            if skill:
+                parts = user.split(' ', 1)
+                if len(parts) > 1:
+                    result = skills.execute(skill, parts[1])
+                else:
+                    result = skills.execute(skill)
+                print(f'JARVIS: {result}')
+            else:
+                result = brain.think(user)
+                print(f'JARVIS: {result}')
+            voice.speak(result[:100] if len(result) > 100 else result)
+    except KeyboardInterrupt:
+        break
+
+print('Goodbye, sir.')
+"
+        ;;
+
+    "voice"|"v")
+        echo "${CYAN}🎤 Voice mode${RESET}"
+        ./jarvis chat
+        ;;
+
+    "skills"|"s")
+        "$PYTHON" -c "
+from jarvis.runtime import SkillsManager
+skills = SkillsManager()
+print('Available skills:')
+for name, desc in skills.list_skills().items():
+    print(f'  {name}: {desc}')
+"
+        ;;
+
+    "home")
+        "$PYTHON" -c "
+from jarvis.integrations import SmartHome
+sh = SmartHome()
+print('Smart Home Controls:')
+print('  Volume:', sh.volume(75))
+print('  WiFi:', sh.wifi_status().strip())
+"
+        ;;
+
+    "auto"|"a")
+        "$PYTHON" -c "
+from jarvis.integrations import Automation
+auto = Automation()
+print('Automation:')
+print(auto.list_triggers())
+"
+        ;;
+
+    "hud")
+        exec "$PYTHON" -m jarvis.cli.hud
+        ;;
+
+    "web"|"ui")
+        echo "${CYAN}Starting JARVIS Web UI...${RESET}"
+        echo "Opening browser..."
+        cd "$JARVIS_ROOT" || exit 1
+        open http://localhost:8080
+        exec "$PYTHON" -m jarvis.cli.server
+        ;;
+
+    "test"|"t"|"")
+        "$PYTHON" -c "
+from jarvis.llm import JARVISBrain
+from jarvis.voice import VoiceOutput
+from jarvis.runtime import SkillsManager
+from jarvis.integrations import SmartHome
+from jarvis.rag import KnowledgeBase
+
+brain = JARVISBrain()
+voice = VoiceOutput()
+skills = SkillsManager()
+smart = SmartHome()
+kb = KnowledgeBase()
+
+print('${CYAN}Testing JARVIS...${RESET}')
+print('')
+
+print('${GREEN}1. Brain:${RESET} ', end='')
+r = brain.think('status')
+print('✓', r[:40])
+
+print('${GREEN}2. Voice:${RESET} ', end='')
+voice.speak('test')
+print('✓ speaking')
+
+print('${GREEN}3. Skills:${RESET} ', end='')
+print('✓', len(skills.list_skills()), 'skills')
+
+print('${GREEN}4. Smart Home:${RESET} ', end='')
+print('✓', smart.volume(50).split()[0])
+
+print('${GREEN}5. Knowledge:${RESET} ', end='')
+print('✓', kb.status())
+
+print('')
+print('${GREEN}✅ All systems operational!${RESET}')
+"
+        ;;
+
+    "help"|"h"|*)
+        echo "JARVIS Commands:"
+        echo "  ./jarvis start   - Start JARVIS"
+        echo "  ./jarvis chat   - Text chat"
+        echo "  ./jarvis voice  - Voice chat"
+        echo "  ./jarvis skills - List skills"
+        echo "  ./jarvis home   - Smart home"
+        echo "  ./jarvis auto   - Automation"
+        echo "  ./jarvis hud   - Terminal HUD"
+        echo "  ./jarvis web   - Web UI"
+        echo "  ./jarvis test   - Test all"
+        ;;
+esac

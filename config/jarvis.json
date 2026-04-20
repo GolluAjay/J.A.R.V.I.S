@@ -1,0 +1,58 @@
+{
+  "name": "JARVIS",
+  "version": "1.0.0",
+  "description": "Tony Stark's AI Assistant - Build your own",
+  "author": "Future Developer",
+  
+  "paths": {
+    "root": "~/JARVIS",
+    "core": "~/JARVIS/core",
+    "skills": "~/JARVIS/skills",
+    "knowledge": "~/JARVIS/knowledge",
+    "logs": "~/JARVIS/logs",
+    "cache": "~/JARVIS/cache",
+    "plugins": "~/JARVIS/plugins"
+  },
+
+  "features": {
+    "voice": {
+      "enabled": true,
+      "wakeWord": "jarvis",
+      "language": "en",
+      "stt": "whisper",
+      "tts": "piper"
+    },
+    "llm": {
+      "enabled": true,
+      "provider": "ollama",
+      "model": "llama3.2:3b",
+      "embedModel": "nomic-embed-text"
+    },
+    "retrieval": {
+      "expand_queries": false,
+      "reflect_retry": true
+    },
+    "smartHome": {
+      "enabled": false,
+      "platforms": ["homekit", "hue"]
+    },
+    "faceAuth": {
+      "enabled": false
+    },
+    "automation": {
+      "enabled": true,
+      "triggers": ["time", "location", "event"]
+    }
+  },
+
+  "server": {
+    "host": "localhost",
+    "port": 8080,
+    "apiPort": 11434
+  },
+
+  "logging": {
+    "level": "info",
+    "file": "~/JARVIS/logs/jarvis.log"
+  }
+}

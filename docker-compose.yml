@@ -1,0 +1,19 @@
+# Local stack for JARVIS: Ollama + Neo4j. Usage: docker compose up -d
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  neo4j:
+    image: neo4j:5
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+
+volumes:
+  ollama_data: {}

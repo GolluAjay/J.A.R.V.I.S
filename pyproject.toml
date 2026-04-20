@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jarvis-assistant"
+version = "1.0.0"
+description = "Local JARVIS-style assistant (HUD, Neo4j RAG, Ollama)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "neo4j>=5.26.0",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[project.scripts]
+jarvis-hud = "jarvis.cli.hud:main"
+jarvis-web = "jarvis.cli.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
