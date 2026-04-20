@@ -445,14 +445,14 @@ def main():
 ║     🤖 JARVIS Advanced Orchestrator                   ║
 ╠═══════════════════════════════════════════════════════╣
 ║                                                       ║
-║  Opening browser at: http://localhost:{PORT}              ║
+║  Opening browser at: http://localhost:{PORT}          ║
 ║                                                       ║
 ║  API Endpoints:                                       ║
 ║    GET  /api/system   - System stats                  ║
-║    GET  /api/processes - List processes                 ║  
+║    GET  /api/processes - List processes               ║  
 ║    GET  /api/docker   - Docker status                 ║
 ║    POST /api/terminal - Run command                   ║
-║    POST /api/action  - System actions                  ║
+║    POST /api/action  - System actions                 ║
 ║    POST /chat        - AI chat                        ║
 ║                                                       ║
 ║  Press Ctrl+C to stop.                                ║
